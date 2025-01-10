@@ -137,6 +137,25 @@ The API is secured with:
 - HTTPS enforcement
 - Rate limiting (via Fly.io)
 
+## Error Monitoring
+
+The application uses Sentry for error tracking and performance monitoring:
+
+- Real-time error tracking and reporting
+- Performance monitoring with automatic transaction tracking
+- Error context and stack traces
+- Deployed to workweek-africa Sentry organization
+
+### Sentry Configuration
+
+The Sentry integration is configured via environment variables:
+
+1. `SENTRY_DSN`: The Data Source Name for your Sentry project
+2. Automatic instrumentation for Flask applications
+3. Performance monitoring enabled with traces and profiles
+
+For local development, ensure the `SENTRY_DSN` is set in your `.env` file.
+
 ## API Key Management
 
 For development and testing:

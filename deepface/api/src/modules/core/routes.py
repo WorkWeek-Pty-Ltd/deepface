@@ -1,9 +1,12 @@
 # built-in dependencies
 from typing import Union
+import os
 
 # 3rd party dependencies
 from flask import Blueprint, request
 import numpy as np
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 # project dependencies
 from deepface import DeepFace
@@ -11,6 +14,14 @@ from deepface.api.src.modules.core import service
 from deepface.commons import image_utils
 from deepface.commons.logger import Logger
 from deepface.api.src.modules.core.auth import require_api_key
+
+# Initialize Sentry
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    integrations=[FlaskIntegration()],
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+)
 
 logger = Logger()
 
