@@ -10,6 +10,25 @@ This repository contains the deployment configuration for running the DeepFace A
 - API key authentication for secure access
 - Deployed on Fly.io with auto-scaling capabilities
 
+## API Authentication
+
+The API uses standard HTTP status codes for authentication:
+
+- 401 Unauthorized: Returned when no API key is provided or when an invalid API key is used
+- 400 Bad Request: Returned for invalid input data
+- 200 OK: Successful requests
+
+All endpoints except the health check (`/`) require a valid API key in the `X-API-Key` header.
+
+### Important Notes
+
+- All API endpoints (except health check) only accept POST requests
+- Images can be sent as:
+  - Direct URLs (recommended)
+  - Base64 encoded strings
+  - File uploads via multipart/form-data
+  - Local file paths (when running locally)
+
 ## Deployment Configuration
 
 The application is deployed using the following configuration:
@@ -39,20 +58,14 @@ headers = {
 
 ```python
 import requests
-import base64
 
 # API endpoint
 url = "https://deepface-workweek.fly.dev/verify"
 
-# Prepare images
-with open("image1.jpg", "rb") as img1, open("image2.jpg", "rb") as img2:
-    img1_base64 = base64.b64encode(img1.read()).decode('utf-8')
-    img2_base64 = base64.b64encode(img2.read()).decode('utf-8')
-
-# Request payload
+# Request payload with image URLs
 payload = {
-    "img1_path": img1_base64,
-    "img2_path": img2_base64
+    "img1": "https://raw.githubusercontent.com/serengil/deepface/master/tests/dataset/img1.jpg",
+    "img2": "https://raw.githubusercontent.com/serengil/deepface/master/tests/dataset/img2.jpg"
 }
 
 # Make request
@@ -64,7 +77,7 @@ result = response.json()
 
 To run the API locally:
 
-1. Install dependencies: `pip install deepface`
+1. Install dependencies: `pip install -r requirements.txt`
 2. Set environment variables:
    ```bash
    export API_KEY=your-secret-key
@@ -85,3 +98,51 @@ The API is secured with:
 - API key authentication
 - HTTPS enforcement
 - Rate limiting (via Fly.io)
+
+## API Key Management
+
+For development and testing:
+
+1. The API key is managed through Fly.io secrets
+2. View current secrets (will only show digests, not actual values):
+   ```bash
+   fly secrets list -a deepface-workweek
+   ```
+3. Generate a new API key:
+   ```bash
+   openssl rand -hex 32
+   ```
+4. Set a new API key:
+   ```bash
+   fly secrets set API_KEY=<new_key> -a deepface-workweek
+   ```
+5. For local testing, set the API key in your environment:
+   ```bash
+   export DEEPFACE_API_KEY=your-api-key
+   ```
+   Note: The actual API key value should be obtained securely from your team's secret management system, not from `fly secrets list` which only shows digests.
+
+## Testing
+
+Run the test suite to verify API functionality:
+
+```bash
+# Ensure API key is set in environment
+export DEEPFACE_API_KEY=your-api-key
+
+# Run tests
+python test_api.py
+```
+
+The test suite verifies:
+
+- API authentication
+- Face verification functionality
+- Error handling
+- Performance metrics
+
+### Test Notes
+
+- Tests expect proper HTTP status codes (401 for auth failures, 400 for bad requests)
+- Tests use direct image URLs from the GitHub repository for consistency
+- Average response times range from 1-4 seconds depending on the operation

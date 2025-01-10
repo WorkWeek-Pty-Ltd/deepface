@@ -20,6 +20,7 @@ blueprint = Blueprint("routes", __name__)
 
 
 @blueprint.route("/")
+@require_api_key
 def home():
     return f"<h1>Welcome to DeepFace API v{DeepFace.__version__}!</h1>"
 
