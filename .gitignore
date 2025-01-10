@@ -1,56 +1,24 @@
-# Environment variables
-.env
-.env.*
-
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-develop-eggs/
+
+# Distribution / packaging
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+build/
 *.egg-info/
-.installed.cfg
-*.egg
 
-# Virtual Environment
+# Virtual environments
 venv/
-ENV/
 env/
-.venv/
+.env
+.venv
 
-# IDE
+# IDE specific files
 .idea/
 .vscode/
 *.swp
-*.swo
-*~
+.DS_Store
 
-# Python
-**/.DS_Store
-Pipfile
-Pipfile.lock
-.mypy_cache/
-deepface.egg-info/
-tests/dataset/*.pkl
-tests/*.ipynb
-tests/*.csv
-*.pyc
-**/.coverage
-**/.coverage.*
-benchmarks/results
-benchmarks/outputs
-benchmarks/dataset
-benchmarks/lfwe
-venv
+# Jupyter Notebook
+.ipynb_checkpoints

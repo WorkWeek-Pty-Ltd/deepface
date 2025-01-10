@@ -75,7 +75,29 @@ result = response.json()
 
 ## Development
 
-To run the API locally:
+### Using Conda Environment (Recommended)
+
+1. Create the Conda environment:
+
+   ```bash
+   conda env create -f environment.yml
+   ```
+
+2. Activate the environment:
+
+   ```bash
+   conda activate deepface-env
+   ```
+
+3. Set environment variables:
+
+   ```bash
+   export API_KEY=your-secret-key
+   ```
+
+4. Run the API: `python -m deepface.api`
+
+### Alternative Setup (pip)
 
 1. Install dependencies: `pip install -r requirements.txt`
 2. Set environment variables:

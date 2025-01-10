@@ -1,0 +1,14 @@
+name: deepface-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - flask>=3.0.0
+  - numpy>=1.24.0
+  - requests>=2.31.0
+  - urllib3>=2.1.0
+  - python-dotenv>=1.0.0
+  - pip:
+      - deepface>=0.0.93

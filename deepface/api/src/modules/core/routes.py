@@ -88,10 +88,10 @@ def represent():
         img_path=img,
         model_name=input_args.get("model_name", "VGG-Face"),
         detector_backend=input_args.get("detector_backend", "opencv"),
-        enforce_detection=input_args.get("enforce_detection", True),
-        align=input_args.get("align", True),
-        anti_spoofing=input_args.get("anti_spoofing", False),
-        max_faces=input_args.get("max_faces"),
+        enforce_detection=bool(input_args.get("enforce_detection", True)),
+        align=bool(input_args.get("align", True)),
+        anti_spoofing=bool(input_args.get("anti_spoofing", False)),
+        max_faces=int(float(input_args["max_faces"])) if input_args.get("max_faces") else None,
     )
 
     logger.debug(obj)
@@ -122,9 +122,9 @@ def verify():
         model_name=input_args.get("model_name", "VGG-Face"),
         detector_backend=input_args.get("detector_backend", "opencv"),
         distance_metric=input_args.get("distance_metric", "cosine"),
-        align=input_args.get("align", True),
-        enforce_detection=input_args.get("enforce_detection", True),
-        anti_spoofing=input_args.get("anti_spoofing", False),
+        align=bool(input_args.get("align", True)),
+        enforce_detection=bool(input_args.get("enforce_detection", True)),
+        anti_spoofing=bool(input_args.get("anti_spoofing", False)),
     )
 
     logger.debug(verification)
@@ -163,9 +163,9 @@ def analyze():
         img_path=img,
         actions=actions,
         detector_backend=input_args.get("detector_backend", "opencv"),
-        enforce_detection=input_args.get("enforce_detection", True),
-        align=input_args.get("align", True),
-        anti_spoofing=input_args.get("anti_spoofing", False),
+        enforce_detection=bool(input_args.get("enforce_detection", True)),
+        align=bool(input_args.get("align", True)),
+        anti_spoofing=bool(input_args.get("anti_spoofing", False)),
     )
 
     logger.debug(demographies)
