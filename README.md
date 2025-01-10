@@ -37,6 +37,22 @@ The application is deployed using the following configuration:
 - 4GB RAM
 - HTTPS enabled
 - API key authentication
+- Custom domain: deepface.workweek.tech (with SSL certificate)
+
+## Custom Domain Setup
+
+The API is accessible at `deepface.workweek.tech`. The domain is configured with:
+
+- CNAME record pointing to `deepface-workweek.fly.dev`
+- Automatic SSL certificate provisioning via Let's Encrypt
+- Full HTTPS support with TLS 1.3
+
+To use the API with the custom domain, simply replace `deepface-workweek.fly.dev` with `deepface.workweek.tech` in your requests:
+
+```python
+# API endpoint with custom domain
+url = "https://deepface.workweek.tech/verify"
+```
 
 ## Environment Variables
 
