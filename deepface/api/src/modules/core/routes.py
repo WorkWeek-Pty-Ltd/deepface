@@ -10,6 +10,7 @@ from deepface import DeepFace
 from deepface.api.src.modules.core import service
 from deepface.commons import image_utils
 from deepface.commons.logger import Logger
+from deepface.api.src.modules.core.auth import require_api_key
 
 logger = Logger()
 
@@ -71,6 +72,7 @@ def extract_image_from_request(img_key: str) -> Union[str, np.ndarray]:
 
 
 @blueprint.route("/represent", methods=["POST"])
+@require_api_key
 def represent():
     input_args = (request.is_json and request.get_json()) or (
         request.form and request.form.to_dict()
@@ -97,6 +99,7 @@ def represent():
 
 
 @blueprint.route("/verify", methods=["POST"])
+@require_api_key
 def verify():
     input_args = (request.is_json and request.get_json()) or (
         request.form and request.form.to_dict()
@@ -129,6 +132,7 @@ def verify():
 
 
 @blueprint.route("/analyze", methods=["POST"])
+@require_api_key
 def analyze():
     input_args = (request.is_json and request.get_json()) or (
         request.form and request.form.to_dict()
