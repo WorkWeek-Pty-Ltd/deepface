@@ -182,3 +182,8 @@ def analyze():
     logger.debug(demographies)
 
     return demographies
+
+
+@blueprint.route("/test-sentry")
+def test_sentry():
+    raise Exception("Test error to verify Sentry integration")
