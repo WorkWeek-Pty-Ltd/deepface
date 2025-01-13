@@ -29,33 +29,47 @@ headers = {
 session = requests.Session()
 session.verify = False  # Disable SSL verification for the session
 
-def test_server_health() -> bool:
-    """Test the server health endpoint with retries for scale-up"""
-    max_retries = 3
-    retry_delay = 10  # seconds
-    
+def retry_with_backoff(operation: str, func, max_retries: int = 3, base_delay: int = 10):
+    """Execute an operation with exponential backoff on failure"""
     for attempt in range(max_retries):
         try:
-            # First check the health endpoint
-            health_response = session.get(f"{API_URL}/health")
-            if health_response.status_code == 200:
-                # If health check passes, try the authenticated endpoint
-                response = session.get(f"{API_URL}/", headers=headers)
-                print(f"Server Status: {response.status_code}")
-                print(f"Response: {response.text}")
-                return response.status_code == 200
+            response = func()
+            if response.status_code == 200:
+                return response
             else:
-                print(f"Health check failed (attempt {attempt + 1}/{max_retries})")
-                print(f"Status: {health_response.status_code}")
+                print(f"{operation} failed (attempt {attempt + 1}/{max_retries})")
+                print(f"Status: {response.status_code}")
                 if attempt < max_retries - 1:
-                    print(f"Waiting {retry_delay} seconds for scale-up...")
-                    time.sleep(retry_delay)
+                    delay = base_delay * (3 ** attempt)  # 10s, 30s, 90s
+                    print(f"Waiting {delay} seconds for retry...")
+                    time.sleep(delay)
         except requests.exceptions.RequestException as e:
-            print(f"Error testing server health: {e}")
+            print(f"Error during {operation}: {e}")
             if attempt < max_retries - 1:
-                print(f"Waiting {retry_delay} seconds for retry...")
-                time.sleep(retry_delay)
+                delay = base_delay * (3 ** attempt)
+                print(f"Waiting {delay} seconds for retry...")
+                time.sleep(delay)
+    return None
+
+def test_server_health() -> bool:
+    """Test the server health endpoint with retries for scale-up"""
+    # First check the health endpoint
+    health_response = retry_with_backoff(
+        "Health check",
+        lambda: session.get(f"{API_URL}/health")
+    )
+    if not health_response:
+        return False
     
+    # If health check passes, try the authenticated endpoint
+    auth_response = retry_with_backoff(
+        "Auth check",
+        lambda: session.get(f"{API_URL}/", headers=headers)
+    )
+    if auth_response:
+        print(f"Server Status: {auth_response.status_code}")
+        print(f"Response: {auth_response.text}")
+        return True
     return False
 
 def test_authentication():
@@ -113,29 +127,28 @@ def test_verify(img1_path: str, img2_path: str, expected_match: bool | None = No
 
     try:
         start_time = time.time()
-        response = session.post(
-            f"{API_URL}/verify",
-            json=payload,
-            headers=headers,
-            timeout=30
+        response = retry_with_backoff(
+            "Verify operation",
+            lambda: session.post(
+                f"{API_URL}/verify",
+                json=payload,
+                headers=headers,
+                timeout=30
+            )
         )
         elapsed_time = time.time() - start_time
-        
         print(f"Response Time: {elapsed_time:.2f} seconds")
-        print(f"Status Code: {response.status_code}")
         
-        if response.status_code == 200:
+        if response:
+            print(f"Status Code: {response.status_code}")
             result = response.json()
             if expected_match is not None:
                 assert result.get("verified") == expected_match, f"Expected match={expected_match}, got {result.get('verified')}"
             return result
         else:
-            print(f"Error: {response.text}")
+            print("Verify operation failed after retries")
             return {}
 
-    except requests.exceptions.RequestException as e:
-        print(f"Request Error: {e}")
-        return {}
     except Exception as e:
         print(f"Unexpected Error: {e}")
         return {}
