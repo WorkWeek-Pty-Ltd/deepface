@@ -61,3 +61,8 @@ primary_region = 'jnb'
   memory = '8gb'
   cpu_kind = 'performance'
   cpus = 2 
+  root_fs_size = "10gb"
+
+[mounts]
+  source = "deepface_data"
+  destination = "/data"

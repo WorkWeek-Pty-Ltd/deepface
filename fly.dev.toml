@@ -60,4 +60,9 @@ primary_region = 'jnb'
   size = 'performance-2x'
   memory = '8gb'
   cpu_kind = 'performance'
-  cpus = 2 
+  cpus = 2
+  root_fs_size = '10gb'
+
+[mounts]
+  source = "deepface_models"
+  destination = "/root/.deepface" 
