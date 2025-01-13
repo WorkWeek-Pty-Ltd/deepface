@@ -1,76 +1,90 @@
-import requests
 import os
-import urllib3
-import time
-from typing import Dict, Any
 import sys
+import time
 import json
+import urllib3
+import requests
+import logging
+from typing import Dict, Any
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-API_URL = os.environ.get("API_BASE_URL", "https://deepface-workweek.fly.dev")
-API_KEY = os.environ.get("API_KEY")  # Get API key from environment variable
+# Get environment variables
+API_KEY = os.getenv("API_KEY")
+API_URL = os.getenv("API_BASE_URL", "https://deepface-workweek-dev.fly.dev")
 
 if not API_KEY:
-    print("Error: API_KEY environment variable not set")
-    print("Please create a .env file with your API key or set it in your environment")
+    logger.error("API_KEY environment variable not set")
+    logger.error("Please create a .env file with your API key or set it in your environment")
     sys.exit(1)
 
+# Default headers for API requests
 headers = {
     "X-API-Key": API_KEY
 }
 
-# Create a session for consistent connection handling
+# Create a session for connection pooling
 session = requests.Session()
 session.verify = False  # Disable SSL verification for the session
 
-def retry_with_backoff(operation: str, func, max_retries: int = 3, base_delay: int = 10):
-    """Execute an operation with exponential backoff on failure"""
+def retry_with_backoff(operation, max_retries=5):
+    """
+    Retry an operation with exponential backoff.
+    Base delay is 10 seconds, which is multiplied by 3 for each retry.
+    Returns the operation result or None if all retries fail.
+    """
     for attempt in range(max_retries):
         try:
-            response = func()
-            if response.status_code == 200:
-                return response
-            else:
-                print(f"{operation} failed (attempt {attempt + 1}/{max_retries})")
-                print(f"Status: {response.status_code}")
-                if attempt < max_retries - 1:
-                    delay = base_delay * (3 ** attempt)  # 10s, 30s, 90s
-                    print(f"Waiting {delay} seconds for retry...")
-                    time.sleep(delay)
-        except requests.exceptions.RequestException as e:
-            print(f"Error during {operation}: {e}")
-            if attempt < max_retries - 1:
-                delay = base_delay * (3 ** attempt)
-                print(f"Waiting {delay} seconds for retry...")
-                time.sleep(delay)
+            result = operation()
+            if hasattr(result, 'status_code') and result.status_code != 503:
+                return result
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1} failed with error: {str(e)}")
+        
+        if attempt < max_retries - 1:  # Don't sleep after the last attempt
+            delay = 10 * (3 ** attempt)  # 10s, 30s, 90s, 270s, 810s
+            logger.info(f"Waiting {delay} seconds for retry...")
+            time.sleep(delay)
+    
     return None
 
-def test_server_health() -> bool:
-    """Test the server health endpoint with retries for scale-up"""
-    # First check the health endpoint
-    health_response = retry_with_backoff(
-        "Health check",
-        lambda: session.get(f"{API_URL}/health")
-    )
-    if not health_response:
+def test_server_health():
+    """Test if the server is healthy by checking the health endpoint."""
+    def check_health():
+        response = session.get(f"{API_URL}/health")
+        if response.status_code != 200:
+            logger.error(f"Health check failed with status code: {response.status_code}")
+            return None
+        
+        # Also verify we can make an authenticated request
+        minimal_payload = {
+            "img1": get_github_raw_url("dataset/img1.jpg"),
+            "img2": get_github_raw_url("dataset/img1.jpg")
+        }
+        response = session.post(f"{API_URL}/verify", headers=headers, json=minimal_payload)
+        if response.status_code in [200, 401]:  # Both success and auth failure are fine, means server is up
+            return response
+        elif response.status_code == 503:  # Service unavailable
+            return None
+        else:
+            logger.error(f"Unexpected status code from verify endpoint: {response.status_code}")
+            return None
+
+    response = retry_with_backoff(check_health)
+    if not response:
+        logger.error("Server health check failed, aborting tests")
         return False
     
-    # If health check passes, try the authenticated endpoint
-    auth_response = retry_with_backoff(
-        "Auth check",
-        lambda: session.get(f"{API_URL}/", headers=headers)
-    )
-    if auth_response:
-        print(f"Server Status: {auth_response.status_code}")
-        print(f"Response: {auth_response.text}")
-        return True
-    return False
+    return True
 
 def test_authentication():
     """Test authentication scenarios"""
@@ -128,7 +142,6 @@ def test_verify(img1_path: str, img2_path: str, expected_match: bool | None = No
     try:
         start_time = time.time()
         response = retry_with_backoff(
-            "Verify operation",
             lambda: session.post(
                 f"{API_URL}/verify",
                 json=payload,
