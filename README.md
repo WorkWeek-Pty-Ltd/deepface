@@ -213,7 +213,7 @@ This repository uses a specific structure for managing dependencies, inherited f
 - `requirements_local`: Contains pinned versions of core ML dependencies that are known to work with DeepFace. These versions have been tested and verified by the original developers. **Do not remove this file** as it ensures compatibility between critical ML components.
 - `requirements.txt`: Contains API and web service dependencies.
 - `requirements_additional.txt`: Contains additional ML model dependencies.
-- `requirements_test.txt`: Contains testing-specific dependencies.
+- `requirements_test.txt`: Contains testing-specific dependencies. This file was made by us, not the original DeepFace repository. It is used to test the API.
 
 The Dockerfile installs these dependencies in a specific order to ensure compatibility:
 
