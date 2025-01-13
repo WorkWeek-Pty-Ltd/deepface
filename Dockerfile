@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libhdf5-dev \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------
