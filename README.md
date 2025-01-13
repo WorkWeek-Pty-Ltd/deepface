@@ -203,3 +203,22 @@ The test suite verifies:
 - Tests expect proper HTTP status codes (401 for auth failures, 400 for bad requests)
 - Tests use direct image URLs from the GitHub repository for consistency
 - Average response times range from 1-4 seconds depending on the operation
+
+## Gotchas
+
+### Dependency Management
+
+This repository uses a specific structure for managing dependencies, inherited from the upstream DeepFace repository:
+
+- `requirements_local`: Contains pinned versions of core ML dependencies that are known to work with DeepFace. These versions have been tested and verified by the original developers. **Do not remove this file** as it ensures compatibility between critical ML components.
+- `requirements.txt`: Contains API and web service dependencies.
+- `requirements_additional.txt`: Contains additional ML model dependencies.
+- `requirements_test.txt`: Contains testing-specific dependencies.
+
+The Dockerfile installs these dependencies in a specific order to ensure compatibility:
+
+1. Core ML dependencies from `requirements_local`
+2. API dependencies from `requirements.txt`
+3. Additional ML model dependencies from `requirements_additional.txt`
+
+This structure is important because ML libraries often have strict version dependencies. The pinned versions in `requirements_local` prevent compatibility issues between core components like TensorFlow, Keras, and OpenCV.
