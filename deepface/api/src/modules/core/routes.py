@@ -203,3 +203,9 @@ def test_sentry():
         "type": "manual_test"
     })
     raise Exception("Test error to verify Sentry integration")
+
+
+@blueprint.route("/health")
+def health_check():
+    """Health check endpoint for Fly.io that doesn't require authentication"""
+    return jsonify({"status": "healthy"}), 200
