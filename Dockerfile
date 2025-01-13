@@ -29,6 +29,7 @@ COPY ./deepface /app/deepface
 # even though we will use local requirements, this one is required to perform install deepface from source code
 COPY ./requirements.txt /app/requirements.txt
 COPY ./requirements_local /app/requirements_local.txt
+COPY ./requirements_additional.txt /app/requirements_additional.txt
 COPY ./package_info.json /app/
 COPY ./setup.py /app/
 COPY ./README.md /app/
@@ -44,10 +45,12 @@ COPY ./entrypoint.sh /app/deepface/api/src/entrypoint.sh
 # install deepface from pypi release (might be out-of-date)
 # RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org deepface
 # -----------------------------------
-# install dependencies - deepface with these dependency versions is working
+# install core ML dependencies with known working versions
 RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -r /app/requirements_local.txt
-# install additional requirements
+# install API dependencies
 RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -r /app/requirements.txt
+# install additional ML model dependencies
+RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -r /app/requirements_additional.txt
 # install deepface from source code (always up-to-date)
 RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -e .
 
