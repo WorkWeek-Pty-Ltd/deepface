@@ -13,11 +13,11 @@ load_dotenv()
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-API_URL = "https://deepface-workweek.fly.dev"
-API_KEY = os.environ.get("DEEPFACE_API_KEY")  # Get API key from environment variable
+API_URL = os.environ.get("API_BASE_URL", "https://deepface-workweek.fly.dev")
+API_KEY = os.environ.get("API_KEY")  # Get API key from environment variable
 
 if not API_KEY:
-    print("Error: DEEPFACE_API_KEY environment variable not set")
+    print("Error: API_KEY environment variable not set")
     print("Please create a .env file with your API key or set it in your environment")
     sys.exit(1)
 
