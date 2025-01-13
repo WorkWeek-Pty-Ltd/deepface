@@ -30,15 +30,33 @@ session = requests.Session()
 session.verify = False  # Disable SSL verification for the session
 
 def test_server_health() -> bool:
-    """Test the server health endpoint"""
-    try:
-        response = session.get(f"{API_URL}/", headers=headers)
-        print(f"Server Status: {response.status_code}")
-        print(f"Response: {response.text}")
-        return response.status_code == 200
-    except requests.exceptions.RequestException as e:
-        print(f"Error testing server health: {e}")
-        return False
+    """Test the server health endpoint with retries for scale-up"""
+    max_retries = 3
+    retry_delay = 10  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            # First check the health endpoint
+            health_response = session.get(f"{API_URL}/health")
+            if health_response.status_code == 200:
+                # If health check passes, try the authenticated endpoint
+                response = session.get(f"{API_URL}/", headers=headers)
+                print(f"Server Status: {response.status_code}")
+                print(f"Response: {response.text}")
+                return response.status_code == 200
+            else:
+                print(f"Health check failed (attempt {attempt + 1}/{max_retries})")
+                print(f"Status: {health_response.status_code}")
+                if attempt < max_retries - 1:
+                    print(f"Waiting {retry_delay} seconds for scale-up...")
+                    time.sleep(retry_delay)
+        except requests.exceptions.RequestException as e:
+            print(f"Error testing server health: {e}")
+            if attempt < max_retries - 1:
+                print(f"Waiting {retry_delay} seconds for retry...")
+                time.sleep(retry_delay)
+    
+    return False
 
 def test_authentication():
     """Test authentication scenarios"""
@@ -175,6 +193,103 @@ def performance_test():
         else:
             print("Test failed - no result")
 
+def test_scaling():
+    """Test scaling behavior of the API"""
+    print("\n=== Testing Scaling Behavior ===")
+    
+    # Test initial cold start
+    print("Testing cold start...")
+    start_time = time.time()
+    response = session.get(f"{API_URL}/", headers=headers)
+    cold_start_time = time.time() - start_time
+    print(f"Cold start response time: {cold_start_time:.2f} seconds")
+    print(f"Cold start status code: {response.status_code}")
+
+    # Test warm requests
+    print("\nTesting warm requests...")
+    warm_times = []
+    for i in range(5):
+        start_time = time.time()
+        response = session.get(f"{API_URL}/", headers=headers)
+        request_time = time.time() - start_time
+        warm_times.append(request_time)
+        print(f"Warm request {i+1} time: {request_time:.2f} seconds")
+    
+    avg_warm_time = sum(warm_times) / len(warm_times)
+    print(f"\nAverage warm request time: {avg_warm_time:.2f} seconds")
+    print(f"Cold start overhead: {cold_start_time - avg_warm_time:.2f} seconds")
+
+    # Test scale down
+    print("\nTesting scale down behavior...")
+    print("Waiting 5 minutes for potential scale down...")
+    time.sleep(300)  # Wait 5 minutes
+    
+    # Test scale up after scale down
+    print("\nTesting scale up after idle...")
+    start_time = time.time()
+    response = session.get(f"{API_URL}/", headers=headers)
+    scale_up_time = time.time() - start_time
+    print(f"Scale up response time: {scale_up_time:.2f} seconds")
+    print(f"Scale up status code: {response.status_code}")
+
+def benchmark_timing():
+    """Benchmark timing characteristics to validate health check settings"""
+    print("\n=== Running Timing Benchmarks ===")
+    
+    # Test initial startup time (cold start)
+    print("\nTesting cold start timing...")
+    start_time = time.time()
+    response = session.get(f"{API_URL}/", headers=headers)
+    startup_time = time.time() - start_time
+    print(f"Initial startup time: {startup_time:.2f}s")
+    
+    # Let the service settle
+    time.sleep(2)
+    
+    # Test response times under rapid requests
+    print("\nTesting rapid request response times...")
+    rapid_times = []
+    for i in range(10):
+        start_time = time.time()
+        response = session.get(f"{API_URL}/", headers=headers)
+        request_time = time.time() - start_time
+        rapid_times.append(request_time)
+        print(f"Request {i+1}: {request_time:.2f}s")
+        time.sleep(0.5)  # Small gap between requests
+    
+    # Test verify endpoint timing (more complex operation)
+    print("\nTesting verify endpoint timing...")
+    verify_times = []
+    test_images = [
+        ("dataset/img1.jpg", "dataset/img2.jpg"),
+        ("dataset/img1.jpg", "dataset/img3.jpg")
+    ]
+    
+    for img1, img2 in test_images:
+        start_time = time.time()
+        result = test_verify(img1, img2)
+        verify_time = time.time() - start_time
+        verify_times.append(verify_time)
+        print(f"Verify operation: {verify_time:.2f}s")
+    
+    # Calculate and display statistics
+    print("\n=== Timing Statistics ===")
+    print(f"Cold start time: {startup_time:.2f}s")
+    print(f"Average health check response: {sum(rapid_times)/len(rapid_times):.2f}s")
+    print(f"Max health check response: {max(rapid_times):.2f}s")
+    print(f"Average verify operation: {sum(verify_times)/len(verify_times):.2f}s")
+    print(f"Max verify operation: {max(verify_times):.2f}s")
+    
+    # Recommendations
+    print("\n=== Health Check Recommendations ===")
+    max_response = max(rapid_times)
+    if max_response > 5:
+        print("⚠️ Consider increasing health check timeout (currently 5s)")
+    if startup_time > 10:
+        print("⚠️ Consider increasing grace period (currently 10s)")
+    if max_response * 6 > 30:  # If max response time * 6 exceeds check interval
+        print("⚠️ Consider increasing check interval (currently 30s)")
+
 def main():
     """Run all tests"""
     print("Starting API Tests...")
@@ -184,10 +299,14 @@ def main():
         print("Server health check failed, aborting tests")
         sys.exit(1)
     
-    # Run all test suites
+    # Run timing benchmarks first
+    benchmark_timing()
+    
+    # Run other test suites
     test_authentication()
     test_error_cases()
     performance_test()
+    test_scaling()
     
     print("\nAll tests completed!")
 
