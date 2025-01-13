@@ -48,8 +48,9 @@ primary_region = 'jnb'
   
   [[services.tcp_checks]]
     interval = "15s"
-    timeout = "2s"
+    timeout = "5s"
     grace_period = "10s"
+    port = 5000
 
 [http_service.tls]
   alpn = ["h2", "http/1.1"]
