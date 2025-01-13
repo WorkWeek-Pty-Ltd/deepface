@@ -3,10 +3,9 @@ from typing import Union
 import os
 
 # 3rd party dependencies
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 import numpy as np
 import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
 
 # project dependencies
 from deepface import DeepFace
@@ -15,17 +14,9 @@ from deepface.commons import image_utils
 from deepface.commons.logger import Logger
 from deepface.api.src.modules.core.auth import require_api_key
 
-# Initialize Sentry
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    integrations=[FlaskIntegration()],
-    traces_sample_rate=1.0,
-    profiles_sample_rate=1.0,
-)
-
 logger = Logger()
 
-blueprint = Blueprint("routes", __name__)
+blueprint = Blueprint("api", __name__)
 
 # pylint: disable=no-else-return, broad-except
 
@@ -184,6 +175,31 @@ def analyze():
     return demographies
 
 
+def set_user_context():
+    # Set user context from API key if available
+    api_key = request.headers.get('X-API-Key')
+    if api_key:
+        with sentry_sdk.configure_scope() as scope:
+            scope.set_user({'id': api_key})
+
+
+@blueprint.before_request
+def before_request():
+    set_user_context()
+
+
+@blueprint.after_request
+def after_request(response):
+    # Add custom headers for tracking
+    response.headers['X-Version'] = os.getenv('APP_VERSION', 'unknown')
+    return response
+
+
 @blueprint.route("/test-sentry")
 def test_sentry():
+    # Add extra context for this error
+    sentry_sdk.set_context("test_context", {
+        "purpose": "verification",
+        "type": "manual_test"
+    })
     raise Exception("Test error to verify Sentry integration")
