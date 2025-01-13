@@ -57,6 +57,6 @@ primary_region = 'jnb'
 
 [[vm]]
   size = 'performance-2x'
-  memory = '4gb'
+  memory = '8gb'
   cpu_kind = 'performance'
   cpus = 2 
