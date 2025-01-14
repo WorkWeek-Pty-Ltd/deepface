@@ -1,5 +1,5 @@
-mediapipe>=0.8.7.3
-ultralytics>=8.0.122
-facenet-pytorch>=2.5.3
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch>=2.1.2+cpu
+mediapipe==0.10.9
+ultralytics==8.3.61
+facenet-pytorch==2.6.0
+torch==2.2.2
