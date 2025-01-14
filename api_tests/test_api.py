@@ -115,14 +115,18 @@ class TestVerification:
     ])
     def test_face_verification(self, session, api_url, headers, img1_path, img2_path, expected_match):
         """Test face verification with different image pairs."""
-        response = session.post(
-            f"{api_url}/verify",
-            headers=headers,
-            json={
-                "img1": get_github_raw_url(img1_path),
-                "img2": get_github_raw_url(img2_path)
-            },
-        )
+        def verify_faces():
+            return session.post(
+                f"{api_url}/verify",
+                headers=headers,
+                json={
+                    "img1": get_github_raw_url(img1_path),
+                    "img2": get_github_raw_url(img2_path)
+                },
+            )
+
+        response = retry_with_backoff(verify_faces)
+        assert response is not None, "Face verification failed after retries"
         assert response.status_code == 200
         result = response.json()
         assert result["verified"] == expected_match
