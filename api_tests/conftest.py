@@ -103,10 +103,10 @@ def api_url():
 @pytest.fixture(scope="session")
 def api_key(api_url):
     """Get the API key from environment variable based on the environment."""
-    # Determine which environment we're testing
-    if 'dev' in api_url:
+    # Determine which environment we're testing based on subdomain
+    if 'deepface-workweek-dev.' in api_url:
         env_var = "API_KEY_DEV"
-    elif 'staging' in api_url:
+    elif 'deepface-workweek-staging.' in api_url:
         env_var = "API_KEY_STAGING"
     else:
         env_var = "API_KEY"  # Production
