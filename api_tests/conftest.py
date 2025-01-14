@@ -27,7 +27,7 @@ def wait_for_fly_machine():
         try:
             # Get machine status
             logger.info(f"Checking machine status (attempt {attempt + 1}/{max_retries})")
-            result = subprocess.run(['fly', 'machines', 'list', '-a', 'deepface-workweek-dev', '--json'], 
+            result = subprocess.run(['flyctl', 'machines', 'list', '-a', 'deepface-workweek-dev', '--json'], 
                                  capture_output=True, text=True, check=True)
             machines = json.loads(result.stdout)
             
@@ -59,7 +59,7 @@ def wait_for_fly_machine():
                 try:
                     logger.info(f"Starting machine {machine_id}")
                     start_result = subprocess.run(
-                        ['fly', 'machines', 'start', machine_id, '-a', 'deepface-workweek-dev'],
+                        ['flyctl', 'machines', 'start', machine_id, '-a', 'deepface-workweek-dev'],
                         capture_output=True, text=True, check=True
                     )
                     logger.info(f"Start command output: {start_result.stdout}")
