@@ -1,0 +1,126 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  deploy-development:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy to development
+        run: |
+          flyctl secrets set API_KEY=${{ secrets.API_KEY_DEV }} --app deepface-workweek-dev
+          flyctl deploy --remote-only --app deepface-workweek-dev
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  test-development:
+    needs: [deploy-development]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "pip"
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+      - name: Run tests against development
+        run: |
+          pytest api_tests/test_api.py -v
+        env:
+          API_KEY_DEV: ${{ secrets.API_KEY_DEV }}
+          API_BASE_URL: https://deepface-workweek-dev.fly.dev
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy-staging:
+    needs: test-development
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy to staging
+        run: |
+          flyctl secrets set API_KEY=${{ secrets.API_KEY_STAGING }} --app deepface-workweek-staging
+          flyctl deploy --remote-only --app deepface-workweek-staging
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  test-staging:
+    needs: [deploy-staging]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "pip"
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+      - name: Run tests against staging
+        run: |
+          pytest api_tests/test_api.py -v
+        env:
+          API_KEY_STAGING: ${{ secrets.API_KEY_STAGING }}
+          API_BASE_URL: https://deepface-workweek-staging.fly.dev
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy-production:
+    needs: test-staging
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy to production
+        run: |
+          flyctl secrets set API_KEY=${{ secrets.API_KEY }} --app deepface-workweek
+          flyctl deploy --remote-only --app deepface-workweek
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  test-production:
+    needs: [deploy-production]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "pip"
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+      - name: Run tests against production
+        run: |
+          pytest api_tests/test_api.py -v
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          API_BASE_URL: https://deepface-workweek.fly.dev
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

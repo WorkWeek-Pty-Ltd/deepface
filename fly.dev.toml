@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for deepface-workweek on 2025-01-10T16:22:49+02:00
+# fly.toml app configuration file for development environment
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'deepface-workweek'
+app = 'deepface-workweek-dev'
 primary_region = 'jnb'
 
 [build]
