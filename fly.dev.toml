@@ -31,27 +31,18 @@ primary_region = 'jnb'
     hard_limit = 250
     soft_limit = 200
 
-[[services]]
-  protocol = "tcp"
+  [http_service.tls]
+    alpn = ["h2", "http/1.1"]
+    versions = ["TLSv1.2", "TLSv1.3"]
+
+[[tcp_services]]
   internal_port = 5001
+  protocol = "tcp"
 
-  [[services.ports]]
-    port = 80
-    handlers = ["http"]
-    force_https = true
-
-  [[services.ports]]
-    port = 443
-    handlers = ["tls", "http"]
-
-  [[services.tcp_checks]]
+  [[tcp_services.checks]]
     interval = "15s"
     timeout = "5s"
     grace_period = "10s"
-
-[http_service.tls]
-  alpn = ["h2", "http/1.1"]
-  versions = ["TLSv1.2", "TLSv1.3"]
 
 [[vm]]
   size = 'performance-2x'
