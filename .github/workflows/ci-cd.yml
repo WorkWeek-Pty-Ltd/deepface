@@ -45,7 +45,7 @@ jobs:
         run: |
           pytest api_tests/test_api.py -v
         env:
-          API_KEY: ${{ secrets.API_KEY_DEV }}
+          API_KEY_DEV: ${{ secrets.API_KEY_DEV }}
           API_BASE_URL: https://deepface-workweek-dev.fly.dev
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -83,7 +83,7 @@ jobs:
         run: |
           pytest api_tests/test_api.py -v
         env:
-          API_KEY: ${{ secrets.API_KEY_STAGING }}
+          API_KEY_STAGING: ${{ secrets.API_KEY_STAGING }}
           API_BASE_URL: https://deepface-workweek-staging.fly.dev
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
