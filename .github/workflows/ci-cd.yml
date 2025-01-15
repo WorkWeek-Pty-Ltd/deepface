@@ -105,7 +105,7 @@ jobs:
             
             for i in $(seq 1 $VOLUMES_NEEDED); do
               echo "Creating production volume $i of $VOLUMES_NEEDED"
-              flyctl volumes create deepface_models --size 10 --app deepface-workweek --region jnb
+              flyctl volumes create deepface_models --size 10 --app deepface-workweek --region jnb --yes
             done
           else
             echo "Production already has $VOLUME_COUNT volumes"
