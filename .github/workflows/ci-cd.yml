@@ -92,6 +92,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Setup production volumes
+        run: |
+          # List existing volumes
+          VOLUMES=$(flyctl volumes list -a deepface-workweek --json)
+          VOLUME_COUNT=$(echo "$VOLUMES" | jq length)
+
+          if [ "$VOLUME_COUNT" -lt 2 ]; then
+            # Calculate how many volumes we need to create
+            VOLUMES_NEEDED=$((2 - VOLUME_COUNT))
+            echo "Creating $VOLUMES_NEEDED new volume(s) for redundancy"
+            
+            for i in $(seq 1 $VOLUMES_NEEDED); do
+              echo "Creating production volume $i of $VOLUMES_NEEDED"
+              flyctl volumes create deepface_models --size 10 --app deepface-workweek --region jnb
+            done
+          else
+            echo "Production already has $VOLUME_COUNT volumes"
+          fi
+
+          # Ensure we have 2 machines for redundancy
+          echo "Scaling to 2 machines for redundancy"
+          flyctl scale count 2 --app deepface-workweek
       - name: Deploy to production
         run: |
           flyctl secrets set API_KEY=${{ secrets.API_KEY }} --app deepface-workweek
