@@ -113,7 +113,7 @@ jobs:
 
           # Ensure we have 2 machines for redundancy
           echo "Scaling to 2 machines for redundancy"
-          flyctl scale count 2 --app deepface-workweek
+          flyctl scale count 2 --app deepface-workweek --yes
       - name: Deploy to production
         run: |
           flyctl secrets set API_KEY=${{ secrets.API_KEY }} --app deepface-workweek
