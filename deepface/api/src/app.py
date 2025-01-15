@@ -14,14 +14,33 @@ from deepface.commons.logger import Logger
 
 logger = Logger()
 
+def get_environment():
+    """Determine the current environment based on the app name"""
+    app_name = os.getenv('FLY_APP_NAME', '')
+    if app_name.endswith('-dev'):
+        return 'development'
+    elif app_name.endswith('-staging'):
+        return 'staging'
+    return 'production'
+
 def before_send(event, hint):
     # Add custom tags and context
     if event.get('request'):
-        event['tags'] = {
+        # Always include these tags for all environments
+        tags = {
             'endpoint': request.endpoint,
             'method': request.method,
-            'api_version': DeepFace.__version__
+            'api_version': DeepFace.__version__,
+            'environment': get_environment(),
+            'app_name': os.getenv('FLY_APP_NAME', '')
         }
+        
+        # Add Fly deployment ID using server name
+        server_name = socket.gethostname()
+        if server_name:
+            tags['fly_deployment'] = server_name
+            
+        event['tags'] = tags
     return event
 
 def tcp_health_server():
@@ -42,11 +61,15 @@ def tcp_health_server():
 
 def create_app():
     # Initialize Sentry with performance monitoring
+    environment = get_environment()
+    logger.info(f"Starting application in {environment} environment")
+    
     sentry_sdk.init(
         dsn=os.getenv('SENTRY_DSN'),
         integrations=[FlaskIntegration()],
         traces_sample_rate=1.0,  # Capture 100% of transactions for performance monitoring
         before_send=before_send,
+        environment=environment,
         release=f"deepface@{DeepFace.__version__}"  # Track releases using DeepFace version
     )
 
@@ -54,6 +77,11 @@ def create_app():
     CORS(app)
     app.register_blueprint(blueprint)
     logger.info(f"Welcome to DeepFace API v{DeepFace.__version__}!")
+
+    # Log deployment information
+    server_name = socket.gethostname()
+    app_name = os.getenv('FLY_APP_NAME', 'unknown')
+    logger.info(f"Running on server: {server_name} for app: {app_name}")
 
     # Start TCP health check server in a separate thread
     tcp_thread = threading.Thread(target=tcp_health_server, daemon=True)
