@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-def wait_for_fly_machine():
+def wait_for_fly_machine(app_name="deepface-workweek-dev"):
     """Check Fly.io machine status and wait if it's being replaced or starting."""
     max_retries = 10  # Increased from 5 to 10
     retry_delay = 30  # seconds
@@ -27,7 +27,7 @@ def wait_for_fly_machine():
         try:
             # Get machine status
             logger.info(f"Checking machine status (attempt {attempt + 1}/{max_retries})")
-            result = subprocess.run(['flyctl', 'machines', 'list', '-a', 'deepface-workweek-dev', '--json'], 
+            result = subprocess.run(['flyctl', 'machines', 'list', '-a', app_name, '--json'], 
                                  capture_output=True, text=True, check=True)
             machines = json.loads(result.stdout)
             
@@ -59,7 +59,7 @@ def wait_for_fly_machine():
                 try:
                     logger.info(f"Starting machine {machine_id}")
                     start_result = subprocess.run(
-                        ['flyctl', 'machines', 'start', machine_id, '-a', 'deepface-workweek-dev'],
+                        ['flyctl', 'machines', 'start', machine_id, '-a', app_name],
                         capture_output=True, text=True, check=True
                     )
                     logger.info(f"Start command output: {start_result.stdout}")
@@ -85,10 +85,19 @@ def wait_for_fly_machine():
     return False
 
 @pytest.fixture(scope="session", autouse=True)
-def ensure_machine_ready():
+def ensure_machine_ready(api_url):
     """Fixture to ensure Fly.io machine is ready before running tests."""
     logger.info("Ensuring Fly.io machine is ready before running tests")
-    if not wait_for_fly_machine():
+    
+    # Determine which app to check based on the API URL
+    if 'deepface-workweek-dev.' in api_url:
+        app_name = "deepface-workweek-dev"
+    elif 'deepface-workweek-staging.' in api_url:
+        app_name = "deepface-workweek-staging"
+    else:
+        app_name = "deepface-workweek"  # Production
+        
+    if not wait_for_fly_machine(app_name):
         logger.error("Skipping tests as Fly.io machine is not ready")
         pytest.skip("Fly.io machine not ready")
     logger.info("Fly.io machine is ready, proceeding with tests")
