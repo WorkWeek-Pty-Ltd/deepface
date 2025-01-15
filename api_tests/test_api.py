@@ -4,6 +4,7 @@ import logging
 import pytest
 from typing import Dict, Any
 from .conftest import get_github_raw_url
+import requests
 
 # Configure logging with more detail
 logging.basicConfig(
@@ -153,3 +154,13 @@ class TestPerformance:
         
         avg_warm_time = sum(warm_times) / len(warm_times)
         logger.info(f"Average warm request time: {avg_warm_time:.2f} seconds") 
+
+class TestSSL:
+    def test_ssl_verification(self, session, api_url):
+        """Test that the API endpoint has valid SSL certificate."""
+        try:
+            response = session.get(api_url, verify=True)
+            assert response.status_code != 495, "SSL Certificate Error"
+            logger.info("SSL certificate verification successful")
+        except requests.exceptions.SSLError as e:
+            pytest.fail(f"SSL certificate verification failed: {str(e)}") 

@@ -139,8 +139,7 @@ def headers(api_key):
 def session():
     """Create a session that will be reused across tests."""
     session = requests.Session()
-    session.verify = False  # Disable SSL verification
-    logger.info("Created reusable session with SSL verification disabled")
+    logger.info("Created reusable session with SSL verification enabled")
     return session
 
 def get_github_raw_url(path):
