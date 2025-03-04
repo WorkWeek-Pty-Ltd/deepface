@@ -1,0 +1,132 @@
+{
+  "projectName": "DeepFace API",
+  "projectDescription": "REST API for face recognition and analysis using the DeepFace library.",
+  "repositoryURL": "https://github.com/WorkWeek/deepface",
+  "technologyStack": {
+    "backend": "Python Flask API",
+    "deployment": "Fly.io",
+    "cicd": "GitHub Actions",
+    "dependencies": [
+      "deepface",
+      "flask",
+      "gunicorn"
+    ]
+  },
+  "architecture": {
+    "components": [
+      {
+        "name": "API Routes",
+        "path": "deepface/api/src/modules/core/routes.py",
+        "description": "All endpoints and request handlers"
+      },
+      {
+        "name": "Service Layer",
+        "path": "deepface/api/src/modules/core/service.py",
+        "description": "Business logic implementation"
+      },
+      {
+        "name": "Authentication",
+        "path": "deepface/api/src/modules/core/auth.py",
+        "description": "API key authentication"
+      },
+      {
+        "name": "Application Entry",
+        "path": "deepface/api/src/app.py",
+        "description": "Flask application setup"
+      }
+    ]
+  },
+  "environments": {
+    "development": {
+      "url": "https://deepface-workweek-dev.fly.dev",
+      "deploymentTrigger": "PR Creation",
+      "purpose": "Testing changes during development"
+    },
+    "staging": {
+      "url": "https://deepface-workweek-staging.fly.dev",
+      "deploymentTrigger": "Merge to main",
+      "purpose": "Pre-production validation"
+    },
+    "production": {
+      "url": "https://deepface-workweek.fly.dev",
+      "deploymentTrigger": "Version tag",
+      "purpose": "Live production environment"
+    }
+  },
+  "workflow": {
+    "development": {
+      "branchConvention": "feature/{feature-name}",
+      "testingRequirement": "All tests must pass before merging",
+      "prProcess": "Create PR to main branch"
+    },
+    "versionTagFormat": "v{major}.{minor}.{patch}",
+    "deploymentFlow": "PR → Development → Staging → Production"
+  },
+  "testing": {
+    "manualTests": {
+      "location": "tests/",
+      "command": "python tests/test_file.py"
+    },
+    "apiTests": {
+      "location": "api_tests/test_api.py",
+      "command": "pytest api_tests/test_api.py -v"
+    },
+    "environmentVariables": {
+      "DEEPFACE_API_KEY": "Required for API tests",
+      "DEEPFACE_API_URL": "URL of the environment to test"
+    }
+  },
+  "codingGuidelines": {
+    "pythonVersion": "3.10",
+    "styleGuide": "PEP 8",
+    "docstringFormat": "Google Style",
+    "fileOrganization": "Modules by feature",
+    "apiResponseFormat": {
+      "success": "200 status with relevant data",
+      "error": "Appropriate error code with message"
+    }
+  },
+  "deployment": {
+    "configFiles": {
+      "development": "fly.dev.toml",
+      "staging": "fly.staging.toml",
+      "production": "fly.toml"
+    }
+  },
+  "knownIssues": {
+    "coldStarts": "Environments may experience 502/503 errors after deployment",
+    "memoryUsage": "High memory usage during face analysis operations"
+  },
+  "features": {
+    "customThreshold": {
+      "endpoint": "/verify",
+      "parameter": "threshold",
+      "purpose": "Adjust face matching sensitivity",
+      "implementation": {
+        "routesFile": "deepface/api/src/modules/core/routes.py",
+        "serviceFile": "deepface/api/src/modules/core/service.py"
+      },
+      "testing": {
+        "manualTest": "tests/test_threshold.py",
+        "cicdTest": "api_tests/test_api.py (TestVerification.test_threshold_parameter)"
+      },
+      "defaultThresholds": {
+        "VGG-Face": 0.4,
+        "Facenet": 0.4,
+        "Facenet512": 0.3,
+        "OpenFace": 0.1,
+        "DeepFace": 0.23,
+        "DeepID": 0.015,
+        "ArcFace": 0.68,
+        "Dlib": 0.7,
+        "SFace": 0.593
+      }
+    }
+  },
+  "bestPractices": {
+    "apiChanges": "Maintain backward compatibility",
+    "documentation": "Update README.md and code comments",
+    "testing": "Test in all environments before merging",
+    "cicd": "All new features must have tests in api_tests/test_api.py"
+  }
+}
