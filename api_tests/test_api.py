@@ -131,6 +131,59 @@ class TestVerification:
         assert response.status_code == 200
         result = response.json()
         assert result["verified"] == expected_match
+        
+    def test_threshold_parameter(self, session, api_url, headers):
+        """Test that custom threshold parameter affects verification results."""
+        # Test images that are the same person (matched in default tests)
+        img1 = get_github_raw_url("dataset/img1.jpg")
+        img2 = get_github_raw_url("dataset/img2.jpg")
+        
+        # Function to verify faces with different thresholds
+        def verify_faces_with_threshold(threshold=None):
+            payload = {
+                "img1": img1,
+                "img2": img2,
+                "model_name": "Facenet512"
+            }
+            
+            if threshold is not None:
+                payload["threshold"] = threshold
+                
+            return session.post(
+                f"{api_url}/verify",
+                headers=headers,
+                json=payload
+            )
+        
+        # Test with default threshold (should verify = True)
+        default_response = retry_with_backoff(lambda: verify_faces_with_threshold())
+        assert default_response is not None, "Default threshold verification failed after retries"
+        assert default_response.status_code == 200
+        default_result = default_response.json()
+        assert default_result["verified"] == True
+        assert "threshold" in default_result
+        default_threshold = default_result["threshold"]
+        logger.info(f"Default threshold: {default_threshold}")
+        
+        # Test with strict threshold (should verify = False)
+        strict_threshold = 0.1  # Very strict threshold
+        strict_response = retry_with_backoff(lambda: verify_faces_with_threshold(strict_threshold))
+        assert strict_response is not None, "Strict threshold verification failed after retries"
+        assert strict_response.status_code == 200
+        strict_result = strict_response.json()
+        assert strict_result["threshold"] == strict_threshold
+        assert strict_result["verified"] == False
+        logger.info(f"Strict threshold test passed: threshold={strict_threshold}, verified={strict_result['verified']}")
+        
+        # Test with lenient threshold (should verify = True)
+        lenient_threshold = 0.9  # Very lenient threshold
+        lenient_response = retry_with_backoff(lambda: verify_faces_with_threshold(lenient_threshold))
+        assert lenient_response is not None, "Lenient threshold verification failed after retries"
+        assert lenient_response.status_code == 200
+        lenient_result = lenient_response.json()
+        assert lenient_result["threshold"] == lenient_threshold
+        assert lenient_result["verified"] == True
+        logger.info(f"Lenient threshold test passed: threshold={lenient_threshold}, verified={lenient_result['verified']}")
 
 class TestPerformance:
     def test_cold_start(self, session, api_url, headers):
