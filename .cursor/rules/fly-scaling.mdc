@@ -34,8 +34,15 @@ The production scaling is implemented in the CI/CD pipeline at `.github/workflow
     flyctl machine list --app deepface-workweek
 ```
 
+## Scaling Order
+The scaling step is executed **after** the deployment to production:
+1. Setup volumes
+2. Deploy to production
+3. Scale production machines
+4. Wait for machines to be ready before testing
+
 ## Post-Deployment Considerations
-- **Wait Time**: CI/CD adds a 60-second wait after deployment to ensure machines are fully provisioned
+- **Wait Time**: CI/CD adds a 60-second wait after scaling to ensure machines are fully provisioned
 - **Machine Status Check**: The CI/CD pipeline checks machine status before running tests
 - **Testing**: Tests are executed only after ensuring the environment is ready
 

@@ -69,7 +69,8 @@
         ],
         "maxPerRegion": 2,
         "command": "fly scale count 8 --region lhr,cdg,ams,jnb --max-per-region 2",
-        "purpose": "Distributed across European and African regions for better performance and redundancy"
+        "purpose": "Distributed across European and African regions for better performance and redundancy",
+        "cicdOrder": "Deploy first, then scale (to ensure latest code is deployed)"
       }
     }
   },
@@ -96,8 +97,8 @@
       "DEEPFACE_API_URL": "URL of the environment to test"
     },
     "productionTestingConsiderations": {
-      "waitPeriod": "60 seconds after deployment to ensure machines are fully provisioned",
-      "environmentSetup": "Export API_KEY and API_BASE_URL explicitly before running tests"
+      "waitPeriod": "60 seconds after scaling to ensure machines are fully provisioned",
+      "machineStatus": "Check status with flyctl machine list before running tests"
     }
   },
   "codingGuidelines": {

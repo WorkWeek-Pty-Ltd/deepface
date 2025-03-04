@@ -31,7 +31,7 @@ When making significant changes to the codebase:
 ## Recently Added Information
 
 - **Machine Scaling**: Production now scales to 8 machines across European and African regions
-- **Test Fixes**: CI/CD pipeline now includes additional wait time and environment variable setup to prevent test skipping
+- **Test Fixes**: CI/CD pipeline now includes additional wait time for machine provisioning
 - **CI/CD Pipeline**: Updated with specific scaling commands and test execution improvements
 
 ## Legacy Support

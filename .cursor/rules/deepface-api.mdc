@@ -33,6 +33,7 @@ The API is deployed on Fly.io and uses GitHub Actions for CI/CD.
 - **Production**: 8 machines across European and African regions with 2 max per region
   - Command: `fly scale count 8 --region lhr,cdg,ams,jnb --max-per-region 2 --app deepface-workweek --yes`
   - Regions: London (lhr), Paris (cdg), Amsterdam (ams), Johannesburg (jnb)
+  - Order: Deploy first, then scale machines
 - **Staging**: Default scaling (2 machines for redundancy)
 - **Development**: Default scaling (2 machines for redundancy)
 
@@ -41,9 +42,10 @@ The API is deployed on Fly.io and uses GitHub Actions for CI/CD.
 - **Staging**: Deployed on merge to main, comprehensive tests run
 - **Production**:
   - Deployed on version tag
-  - Scales to 8 machines before deployment
-  - Waits after deployment for machines to start
-  - Runs full test suite against production
+  - Deploy to production first
+  - Scale to 8 machines after deployment
+  - Wait 60 seconds after scaling
+  - Run full test suite against production
 
 ## Coding Standards
 - Python 3.10

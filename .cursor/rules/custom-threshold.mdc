@@ -1,0 +1,62 @@
+# Custom Threshold Parameter
+# File patterns: deepface/api/src/modules/core/*.py, api_tests/test_api.py, tests/test_threshold.py
+
+## Overview
+DeepFace API supports a custom threshold parameter for the `/verify` endpoint, allowing clients to adjust face match sensitivity.
+
+## Implementation Details
+- **Routes Layer**: `deepface/api/src/modules/core/routes.py` - Accepts and validates the threshold parameter
+- **Service Layer**: `deepface/api/src/modules/core/service.py` - Passes the threshold to DeepFace verification
+- **Default Thresholds**: Model-specific, defined in both code and documentation
+  - VGG-Face: 0.4
+  - Facenet: 0.4
+  - Facenet512: 0.3
+  - OpenFace: 0.1
+  - DeepFace: 0.23
+  - DeepID: 0.015
+  - ArcFace: 0.68
+  - Dlib: 0.7
+  - SFace: 0.593
+
+## Testing
+- **Manual Testing**: `tests/test_threshold.py` (standalone script)
+- **CI/CD Testing**: `api_tests/test_api.py` contains the `test_threshold_parameter` method in the `TestVerification` class
+- **Important**: All new features must be tested in `api_tests/test_api.py` to be included in CI/CD
+
+## Usage Example
+```python
+payload = {
+    "img1": "https://example.com/person1.jpg",
+    "img2": "https://example.com/person2.jpg",
+    "model_name": "Facenet512",
+    "threshold": 0.5  # Custom threshold (more lenient than default 0.3)
+}
+
+headers = {
+    "Content-Type": "application/json",
+    "X-API-Key": "your_api_key"
+}
+
+response = requests.post("https://deepface-workweek.fly.dev/verify", 
+                         json=payload, 
+                         headers=headers)
+```
+
+## Response Format
+When using the threshold parameter, the API response will include the threshold used:
+```json
+{
+  "verified": true,
+  "distance": 0.26593,
+  "threshold": 0.5,
+  "model": "Facenet512",
+  "detector_backend": "retinaface",
+  "similarity_metric": "cosine"
+}
+```
+
+## Considerations
+- Lower threshold = stricter matching (fewer false positives)
+- Higher threshold = more lenient matching (fewer false negatives)
+- Always document threshold parameter usage for consistency
+- Maintain backward compatibility (parameter is optional) 

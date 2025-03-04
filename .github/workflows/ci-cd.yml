@@ -111,15 +111,20 @@ jobs:
             echo "Production already has $VOLUME_COUNT volumes"
           fi
 
-          # Ensure we have 2 machines for redundancy
-          echo "Scaling to 2 machines for redundancy"
-          flyctl scale count 2 --app deepface-workweek --yes
       - name: Deploy to production
         run: |
           flyctl secrets set API_KEY=${{ secrets.API_KEY }} SENTRY_DSN=${{ secrets.SENTRY_DSN }} --app deepface-workweek
           flyctl deploy --remote-only --app deepface-workweek
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Scale production environment
+        run: |
+          echo "Scaling to 8 machines across European and African regions"
+          flyctl scale count 8 --region lhr,cdg,ams,jnb --max-per-region 2 --app deepface-workweek --yes
+          echo "Waiting for machines to start (30 seconds)"
+          sleep 30
+          flyctl machine list --app deepface-workweek
 
   test-production:
     needs: [deploy-production]
@@ -137,8 +142,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_test.txt
+      - name: Wait for production environment to be ready
+        run: |
+          echo "Waiting for machines to be fully provisioned (60 seconds)"
+          sleep 60
+          flyctl machine list --app deepface-workweek
       - name: Run tests against production
         run: |
+          echo "Running tests against production environment"
           pytest api_tests/test_api.py -v
         env:
           API_KEY: ${{ secrets.API_KEY }}
