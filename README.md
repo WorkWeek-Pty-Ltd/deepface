@@ -81,13 +81,41 @@ url = "https://deepface-workweek.fly.dev/verify"
 # Request payload with image URLs
 payload = {
     "img1": "https://raw.githubusercontent.com/serengil/deepface/master/tests/dataset/img1.jpg",
-    "img2": "https://raw.githubusercontent.com/serengil/deepface/master/tests/dataset/img2.jpg"
+    "img2": "https://raw.githubusercontent.com/serengil/deepface/master/tests/dataset/img2.jpg",
+    "model_name": "Facenet512",     # Optional - default is VGG-Face
+    "detector_backend": "retinaface", # Optional - default is opencv
+    "distance_metric": "cosine",    # Optional - default is cosine
+    "threshold": 0.43               # Optional - custom similarity threshold
 }
 
 # Make request
 response = requests.post(url, json=payload, headers=headers)
 result = response.json()
 ```
+
+### Configuring Threshold Values
+
+The threshold parameter determines when two faces are considered a match:
+
+- For cosine similarity, lower values mean stricter matching (typical range: 0.2 to 0.5)
+- Default thresholds vary by model and distance metric
+
+Model-specific default thresholds for cosine distance:
+
+- VGG-Face: 0.68
+- Facenet: 0.40
+- Facenet512: 0.30
+- ArcFace: 0.68
+- SFace: 0.593
+- OpenFace: 0.10
+- DeepFace: 0.23
+- DeepID: 0.015
+- GhostFaceNet: 0.65
+
+You can customize this threshold based on your specific needs:
+
+- Lower threshold = fewer false positives but more false negatives
+- Higher threshold = more false positives but fewer false negatives
 
 ## Development
 

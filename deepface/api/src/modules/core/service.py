@@ -53,7 +53,27 @@ def verify(
     enforce_detection: bool,
     align: bool,
     anti_spoofing: bool,
+    threshold: Optional[float] = None,
 ):
+    """
+    Verify if two images represent the same person using facial recognition.
+    
+    Args:
+        img1_path: Path to the first image or numpy array
+        img2_path: Path to the second image or numpy array
+        model_name: Model to use for facial recognition
+        detector_backend: Backend for face detection
+        distance_metric: Metric for measuring similarity
+        enforce_detection: Whether to enforce face detection
+        align: Whether to align detected faces
+        anti_spoofing: Whether to check for spoofing attempts
+        threshold: Custom threshold value to determine when faces match.
+                  If None, uses default thresholds based on model and distance metric.
+                  For cosine distance: lower values = stricter matching.
+    
+    Returns:
+        Verification result object with match status and distance metrics
+    """
     try:
         obj = DeepFace.verify(
             img1_path=img1_path,
@@ -64,6 +84,7 @@ def verify(
             align=align,
             enforce_detection=enforce_detection,
             anti_spoofing=anti_spoofing,
+            threshold=threshold,
         )
         return obj
     except Exception as err:
