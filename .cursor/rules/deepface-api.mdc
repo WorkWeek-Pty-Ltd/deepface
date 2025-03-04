@@ -1,0 +1,60 @@
+# DeepFace API Project Rules
+# File patterns: *.py
+
+## Project Overview
+DeepFace API is a REST API for face recognition and analysis using the DeepFace library.
+The API is deployed on Fly.io and uses GitHub Actions for CI/CD.
+
+## Architecture
+- **API Routes**: `deepface/api/src/modules/core/routes.py` - All endpoints and handlers
+- **Service Layer**: `deepface/api/src/modules/core/service.py` - Business logic
+- **Authentication**: `deepface/api/src/modules/core/auth.py` - API key auth
+- **App Entry**: `deepface/api/src/app.py` - Flask application setup
+
+## Deployment Environments
+- **Development**: https://deepface-workweek-dev.fly.dev (deployed on PR creation)
+- **Staging**: https://deepface-workweek-staging.fly.dev (deployed on merge to main)
+- **Production**: https://deepface-workweek.fly.dev (deployed on version tag)
+
+## Development Workflow
+1. Create feature branch: `feature/{feature-name}`
+2. Implement changes and tests
+3. Create PR to main branch
+4. CI/CD deploys to development and runs tests
+5. Merge to main for staging deployment
+6. Create version tag for production deployment
+
+## Testing
+- **Manual Tests**: `tests/` directory
+- **API Tests for CI/CD**: `api_tests/test_api.py`
+- **Important**: Always add test cases to `api_tests/test_api.py` for CI/CD
+
+## Scaling Configuration
+- **Production**: 8 machines across European and African regions with 2 max per region
+  - Command: `fly scale count 8 --region lhr,cdg,ams,jnb --max-per-region 2 --app deepface-workweek --yes`
+  - Regions: London (lhr), Paris (cdg), Amsterdam (ams), Johannesburg (jnb)
+- **Staging**: Default scaling (2 machines for redundancy)
+- **Development**: Default scaling (2 machines for redundancy)
+
+## CI/CD Pipeline
+- **Development**: Deployed on PR creation, basic tests run
+- **Staging**: Deployed on merge to main, comprehensive tests run
+- **Production**:
+  - Deployed on version tag
+  - Scales to 8 machines before deployment
+  - Waits after deployment for machines to start
+  - Runs full test suite against production
+
+## Coding Standards
+- Python 3.10
+- Follow PEP 8
+- Use Google-style docstrings
+- API responses should follow consistent format:
+  - Success: 200 status with relevant data
+  - Error: Appropriate error code with message
+
+## Best Practices
+- Maintain backward compatibility
+- Document new parameters in README.md and code
+- Test in all environments before merging
+- CI/CD flow: PR → Development → Staging → Production 

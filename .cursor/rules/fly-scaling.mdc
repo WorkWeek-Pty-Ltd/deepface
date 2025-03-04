@@ -1,0 +1,58 @@
+# Fly.io Machine Scaling Configuration
+# File patterns: .github/workflows/*.yml
+
+## Overview
+DeepFace API is deployed on Fly.io and requires specific machine scaling configurations across different environments. This document outlines the scaling approach for each environment.
+
+## Production Scaling
+- **Machine Count**: 8 machines
+- **Regions**: 
+  - London (lhr)
+  - Paris (cdg)
+  - Amsterdam (ams)
+  - Johannesburg (jnb)
+- **Max Per Region**: 2 machines per region
+- **Command**:
+  ```bash
+  fly scale count 8 --region lhr,cdg,ams,jnb --max-per-region 2 --app deepface-workweek --yes
+  ```
+- **Purpose**: 
+  - Distribute load across European and African regions
+  - Ensure redundancy in each region
+  - Optimize for performance in target markets
+
+## CI/CD Implementation
+The production scaling is implemented in the CI/CD pipeline at `.github/workflows/ci-cd.yml`:
+
+```yaml
+- name: Scale production environment
+  run: |
+    echo "Scaling to 8 machines across European and African regions"
+    flyctl scale count 8 --region lhr,cdg,ams,jnb --max-per-region 2 --app deepface-workweek --yes
+    echo "Waiting for machines to start (30 seconds)"
+    sleep 30
+    flyctl machine list --app deepface-workweek
+```
+
+## Post-Deployment Considerations
+- **Wait Time**: CI/CD adds a 60-second wait after deployment to ensure machines are fully provisioned
+- **Machine Status Check**: The CI/CD pipeline checks machine status before running tests
+- **Testing**: Tests are executed only after ensuring the environment is ready
+
+## Staging and Development Environments
+- **Default Configuration**: 2 machines for basic redundancy
+- **Region**: Default region (determined by Fly.io based on availability)
+- **Purpose**: Minimal configuration sufficient for testing
+
+## Manual Scaling (if needed)
+If you need to manually scale the machines:
+
+1. Install the Fly CLI: `curl -L https://fly.io/install.sh | sh`
+2. Authenticate: `flyctl auth login`
+3. Scale using the command: `flyctl scale count <number> --app <app-name> [--region <regions>] [--max-per-region <number>]`
+4. Check status: `flyctl machine list --app <app-name>`
+
+## Troubleshooting Scaling Issues
+- **Cold Starts**: New machines may take time to initialize, causing 502/503 errors
+- **Resource Limits**: Ensure your Fly.io account has sufficient resources for the scaled machines
+- **Test Failures**: If tests are failing after scaling, check machine status with `flyctl machine list` 
