@@ -40,17 +40,38 @@
     "development": {
       "url": "https://deepface-workweek-dev.fly.dev",
       "deploymentTrigger": "PR Creation",
-      "purpose": "Testing changes during development"
+      "purpose": "Testing changes during development",
+      "scaling": {
+        "machines": 2,
+        "purpose": "Basic redundancy"
+      }
     },
     "staging": {
       "url": "https://deepface-workweek-staging.fly.dev",
       "deploymentTrigger": "Merge to main",
-      "purpose": "Pre-production validation"
+      "purpose": "Pre-production validation",
+      "scaling": {
+        "machines": 2,
+        "purpose": "Basic redundancy"
+      }
     },
     "production": {
       "url": "https://deepface-workweek.fly.dev",
       "deploymentTrigger": "Version tag",
-      "purpose": "Live production environment"
+      "purpose": "Live production environment",
+      "scaling": {
+        "machines": 8,
+        "regions": [
+          "lhr",
+          "cdg",
+          "ams",
+          "jnb"
+        ],
+        "maxPerRegion": 2,
+        "command": "fly scale count 8 --region lhr,cdg,ams,jnb --max-per-region 2",
+        "purpose": "Distributed across European and African regions for better performance and redundancy",
+        "cicdOrder": "Deploy first, then scale (to ensure latest code is deployed)"
+      }
     }
   },
   "workflow": {
@@ -74,6 +95,10 @@
     "environmentVariables": {
       "DEEPFACE_API_KEY": "Required for API tests",
       "DEEPFACE_API_URL": "URL of the environment to test"
+    },
+    "productionTestingConsiderations": {
+      "waitPeriod": "60 seconds after scaling to ensure machines are fully provisioned",
+      "machineStatus": "Check status with flyctl machine list before running tests"
     }
   },
   "codingGuidelines": {
@@ -95,7 +120,8 @@
   },
   "knownIssues": {
     "coldStarts": "Environments may experience 502/503 errors after deployment",
-    "memoryUsage": "High memory usage during face analysis operations"
+    "memoryUsage": "High memory usage during face analysis operations",
+    "testSkipping": "Tests may be skipped if the environment is not fully ready - wait period added to CI/CD pipeline"
   },
   "features": {
     "customThreshold": {

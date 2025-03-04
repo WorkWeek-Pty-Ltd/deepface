@@ -11,6 +11,8 @@ This directory contains rules and guidelines for Cursor AI when interacting with
 
 1. **deepface-api.mdc**: General rules for the DeepFace API project, including architecture, workflow, and best practices
 2. **custom-threshold.mdc**: Specific rules for the custom threshold parameter implementation
+3. **fly-scaling.mdc**: Configuration and implementation details for Fly.io machine scaling
+4. **test-skipping-fix.mdc**: Documentation of the test skipping issue and implemented fix
 
 ## Configuration Instructions
 
@@ -25,6 +27,12 @@ When making significant changes to the codebase:
 1. Update relevant rule files to reflect the new architecture or workflow
 2. Consider adding new rule files for major features
 3. Keep the information accurate to ensure Cursor has the correct context
+
+## Recently Added Information
+
+- **Machine Scaling**: Production now scales to 8 machines across European and African regions
+- **Test Fixes**: CI/CD pipeline now includes additional wait time for machine provisioning
+- **CI/CD Pipeline**: Updated with specific scaling commands and test execution improvements
 
 ## Legacy Support
 

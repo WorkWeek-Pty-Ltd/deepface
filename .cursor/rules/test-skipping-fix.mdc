@@ -1,0 +1,53 @@
+# Test Skipping Fix
+# File patterns: .github/workflows/ci-cd.yml, api_tests/conftest.py, api_tests/test_api.py
+
+## Issue Overview
+Tests in the CI/CD pipeline were being skipped in production deployments with the following output:
+
+```
+api_tests/test_api.py::TestHealth::test_server_health SKIPPED (Fly.i...) [  7%]
+api_tests/test_api.py::TestAuthentication::test_no_api_key SKIPPED (...) [ 15%]
+...
+======================= 13 skipped in 305.08s (0:05:05) =======================
+```
+
+## Root Cause Analysis
+Based on investigating the `conftest.py` file, tests are being skipped when:
+- The Fly.io machine readiness check (`wait_for_fly_machine()`) fails
+- This function checks if any machine is in the "started" state
+- If no machine is ready after multiple retries, tests are skipped
+
+The most likely reason is that after deployment and scaling, machines need time to fully initialize before they can respond to requests.
+
+## Solution Implemented
+The following changes were made to address the issue:
+
+1. **Added Wait Time**: Added a 60-second wait after scaling to ensure machines are fully provisioned
+2. **Machine Status Check**: Added a step to check machine status before running tests
+3. **Changed Scaling Order**: Scaling now happens after deployment, ensuring machines are provisioned with the latest code
+
+## CI/CD Fixes in Detail
+The following code was added to the CI/CD pipeline:
+
+```yaml
+- name: Wait for production environment to be ready
+  run: |
+    echo "Waiting for machines to be fully provisioned (60 seconds)"
+    sleep 60
+    flyctl machine list --app deepface-workweek
+```
+
+## How the Fix Works
+1. The wait period gives machines time to fully initialize after scaling
+2. The machine status check confirms machines are running before tests start
+3. The `conftest.py` file's machine readiness check will proceed with tests when it detects running machines
+
+## Verification
+The fix should be verified by observing test runs in the CI/CD pipeline after a new version tag is created. Tests should no longer show as SKIPPED and should now either PASS or FAIL.
+
+## Further Considerations
+- If tests are still being skipped, we should:
+  1. Increase the wait time to account for longer cold start periods
+  2. Review the `conftest.py` file's machine readiness checks for potential improvements
+  3. Consider adding more detailed logging to understand exactly why tests are being skipped
+- Monitor cold start times to adjust wait periods as needed 
