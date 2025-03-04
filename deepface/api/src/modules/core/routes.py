@@ -118,6 +118,19 @@ def verify():
     except Exception as err:
         return {"exception": str(err)}, 400
 
+    # Extract threshold parameter if provided
+    # The threshold determines when two faces are considered a match
+    # Lower values are stricter (fewer false positives)
+    # Higher values are more lenient (fewer false negatives)
+    threshold = None
+    if "threshold" in input_args:
+        try:
+            threshold_value = input_args.get("threshold")
+            if threshold_value is not None:
+                threshold = float(threshold_value)
+        except (ValueError, TypeError):
+            return {"exception": "Threshold must be a valid float value"}, 400
+
     verification = service.verify(
         img1_path=img1,
         img2_path=img2,
@@ -127,6 +140,7 @@ def verify():
         align=bool(input_args.get("align", True)),
         enforce_detection=bool(input_args.get("enforce_detection", True)),
         anti_spoofing=bool(input_args.get("anti_spoofing", False)),
+        threshold=threshold,
     )
 
     logger.debug(verification)
